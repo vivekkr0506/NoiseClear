@@ -1,8 +1,9 @@
-package com.noiseclear
+package com.noiseclear.recorder
 
 import android.content.Context
 import android.media.MediaRecorder
 import android.os.Build
+import java.io.File
 import java.io.FileOutputStream
 
 class AudioRecorder(
@@ -36,4 +37,5 @@ class AudioRecorder(
         recorder?.reset()
         recorder = null
     }
+
 }
