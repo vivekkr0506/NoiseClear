@@ -1,4 +1,4 @@
-package com.noiseclear.component
+package com.noiseclear.composable
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

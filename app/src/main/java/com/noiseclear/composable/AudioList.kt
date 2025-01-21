@@ -1,7 +1,6 @@
-package com.noiseclear.component
+package com.noiseclear.composable
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -31,37 +30,37 @@ fun AudioList(filesList: List<File>, onPlayAudio: (File) -> Unit, onDeleteAudio:
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = file.name)
-                Box(
-                    modifier = Modifier.background(
+
+                Row {
+                    Box(modifier = Modifier.background(
                         shape = CircleShape, color = Color.LightGray
-                    )
-                ) {
-                    IconButton(onClick = { onPlayAudio(file) }) {
-                        Icon(
-                            Icons.Filled.PlayArrow,
-                            contentDescription = "Play Audio",
-                            tint = Color.Red
+                    ),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        IconButton(onClick = { onPlayAudio(file) }) {
+                            Icon(
+                                Icons.Filled.PlayArrow,
+                                contentDescription = "Play Audio",
+                                tint = Color.Red
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier.background(shape = CircleShape, color = Color.LightGray
                         )
+                    ) {
+                        IconButton(onClick = { onDeleteAudio(file) }) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = "Delete Audio"
+                            )
+                        }
                     }
                 }
-
-                Box(
-                    modifier = Modifier.background(
-                        shape = CircleShape, color = Color.LightGray
-                    )
-                ) {
-                    IconButton(onClick = { onDeleteAudio(file) }) {
-                        Icon(
-                            Icons.Filled.Delete,
-                            contentDescription = "Delete Audio"
-                        )
-                    }
-                }
-
             }
         }
     }

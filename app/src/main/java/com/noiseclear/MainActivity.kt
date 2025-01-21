@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.MediaRecorder
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -11,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -36,12 +39,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.noiseclear.component.AudioList
-import com.noiseclear.component.AudioRecordAppUI
-import com.noiseclear.component.ConfirmationDialogue
-import com.noiseclear.component.NoiseMeter
-import com.noiseclear.component.TopAppBar
-import com.noiseclear.component.WaveAnimation
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.extractor.OpusUtil.SAMPLE_RATE
+import com.noiseclear.composable.AudioList
+import com.noiseclear.composable.AudioRecordAppUI
+import com.noiseclear.composable.ConfirmationDialogue
+import com.noiseclear.composable.NoiseMeter
+import com.noiseclear.composable.TopAppBar
+import com.noiseclear.composable.WaveAnimation
 import com.noiseclear.playback.AudioPlayer
 import com.noiseclear.recorder.AudioRecorder
 import com.noiseclear.viewModel.AudioViewModel
@@ -49,18 +54,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 
+@UnstableApi
 class MainActivity : ComponentActivity() {
 
     private var isRecording = false
     private var isAudioPlaying = false
     private var noiseLevel: Double = 0.0
-
-    private val SAMPLE_RATE = 16000
-    private val NOISE_THRESHOLD = 100.0
-    private val bufferSize = AudioRecord.getMinBufferSize(
-        SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
-    )
-
+    private var audioRecord : AudioRecord?= null
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (!isGranted) {
@@ -81,10 +81,15 @@ class MainActivity : ComponentActivity() {
 
 
     private val viewModel: AudioViewModel by viewModels()
-
+     val RECORDER_SAMPLE_RATE = 44100
+     val AUDIO_SOURCE = MediaRecorder.AudioSource.MIC
+     val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO
+     val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+     val BUFFER_SIZE_RECORDING = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkPermission()
+        audioRecord = AudioRecord(AUDIO_SOURCE, RECORDER_SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE_RECORDING);
         audioFiles =  getAudioFiles().toMutableList()
         setContent {
             MainComponent(noiseLevel = noiseLevel,
@@ -96,10 +101,14 @@ class MainActivity : ComponentActivity() {
                     stopRecording()
                     audioFiles = getAudioFiles().toMutableList()
                 },
-                onPlayAudio = {viewModel.playAudio(it) },
+                onPlayAudio = {playAudio(it) },
                 onDeleteAudio = { DeleteAudio(it) },
                 currentFile = audioFile,
-                onSaveRecording = null)
+                onSaveRecording = {  name,recordingFile ->
+                    val renamedFile = File(recordingFile.parent,"$name.mp3")
+                    audioFile?.renameTo(renamedFile)
+                    audioFiles.add(renamedFile)
+                })
         }
     }
 
@@ -134,7 +143,8 @@ class MainActivity : ComponentActivity() {
             }
             isRecording = true
             lifecycleScope.launch(Dispatchers.IO) {
-                val audioData = ByteArray(bufferSize)
+
+           //     val audioData = ByteArray(bufferSize)
                 while (isRecording) {
 //                     val readResult = recorder.read(audioData, 0, audioData.size)
 //                    if (readResult > 0) {
@@ -153,10 +163,14 @@ class MainActivity : ComponentActivity() {
                                 stopRecording()
                                 filesList = getAudioFiles()
                             },
-                            onPlayAudio = { viewModel.playAudio(it) },
+                            onPlayAudio = { playAudio(it) },
                             onDeleteAudio = { DeleteAudio(it) },
                             currentFile = audioFile,
-                            onSaveRecording = null
+                            onSaveRecording = {  name,recordingFile ->
+                                val renamedFile = File(recordingFile.parent,"$name.mp3")
+                                audioFile?.renameTo(renamedFile)
+                                audioFiles.add(renamedFile)
+                            }
                         )
                     }
 
@@ -170,7 +184,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
+    fun playAudio(file: File) {
+        try {
+            player.playFile(file)
+        } catch (e: Exception) {
+            Log.e("AudioPlay", "Exception: Failed to play audio", e)
+        }
+    }
     private fun stopRecording() {
         setContent {
             audioFile?.let{ file ->
@@ -185,7 +205,7 @@ class MainActivity : ComponentActivity() {
                         viewModel.stopRecording()
                         audioFiles = getAudioFiles().toMutableList()
                     },
-                    onPlayAudio = { viewModel.playAudio(it) },
+                    onPlayAudio = { playAudio(it) },
                     onDeleteAudio = { DeleteAudio(it) },
                     currentFile = file,
                     onSaveRecording = {  name,recordingFile ->
@@ -220,7 +240,7 @@ class MainActivity : ComponentActivity() {
         try {
             if (file.exists()) {
                 file.delete()
-                Toast.makeText(this, "Delete Audi", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Audio Deleted", Toast.LENGTH_SHORT).show()
                 audioFiles = getAudioFiles().toMutableList()
             }
         } catch (e: Exception) {
@@ -231,6 +251,7 @@ class MainActivity : ComponentActivity() {
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainComponent(
@@ -295,7 +316,7 @@ fun MainComponent(
                     showBottomSheet = false
                 }, sheetState = sheetState, shape = RoundedCornerShape(
                     topStart = 20.dp, topEnd = 20.dp
-                ), scrimColor = Color.Transparent
+                ), scrimColor = Color.Unspecified
             ) {
                 AudioList(filesList, onPlayAudio, onDeleteAudio)
             }

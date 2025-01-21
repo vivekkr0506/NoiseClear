@@ -1,5 +1,7 @@
-package com.noiseclear.component
+package com.noiseclear.composable
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -15,8 +17,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ConfirmationDialogue(
     recordingFile: File,
@@ -24,7 +30,12 @@ fun ConfirmationDialogue(
     onSave: (String,File) -> Unit,
     onDelete: () -> Unit
 ) {
-    var audioName by remember { mutableStateOf("") }
+
+    val current = LocalDateTime.now()
+
+    val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
+    val formatted = current.format(formatter)
+    var audioName by remember { mutableStateOf("audio_$formatted") }
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text("Rename Audio") },

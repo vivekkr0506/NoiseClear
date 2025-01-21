@@ -1,4 +1,4 @@
-package com.noiseclear.component
+package com.noiseclear.composable
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
