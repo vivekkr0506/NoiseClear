@@ -40,7 +40,9 @@ class MainActivity : ComponentActivity() {
                 startRecording = { audioViewModel.startRecording(this, recorder) },
                 stopRecording = { audioViewModel.stopRecording(recorder) },
                 onPlayAudio = { audioViewModel.playAudio(this,it) },
+                onPauseAudio = {audioViewModel.pauseAudio(this)},
                 onDeleteAudio = { audioViewModel.deleteAudio(this,it) },
+                onResumeAudio = {audioViewModel.resumeAudio(this,it!!)},
                 onSaveRecording = { name, recordingFile ->
                     audioViewModel.saveRecording(this,
                         name,

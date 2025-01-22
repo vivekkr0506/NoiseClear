@@ -34,12 +34,9 @@ class AudioRecorder(
 
     override fun startAudio() {
     }
-
     override fun stop() {
         recorder?.stop()
         recorder?.reset()
         recorder = null
     }
-
-
 }

@@ -34,7 +34,9 @@ fun MainComponent(
     stopRecording: () -> Unit,
     onPlayAudio: (File) -> Unit,
     onDeleteAudio: (File) -> Unit,
-    onSaveRecording: ((String, File) -> Unit)?
+    onSaveRecording: ((String, File) -> Unit)?,
+    onPauseAudio: () -> Unit,
+    onResumeAudio: (File) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -44,6 +46,8 @@ fun MainComponent(
     val isRecording by audioViewModel.isRecording.collectAsState()
     val fileList by audioViewModel.audioFiles.collectAsState(emptyList())
     val currentFile by audioViewModel.audioFile.collectAsState(null)
+
+    val isPlaying by audioViewModel.isPlaying.collectAsState(false)
     LaunchedEffect(currentFile, isRecording) {
         if (currentFile != null && !isRecording) {
             showSaveDialog = true
@@ -52,14 +56,16 @@ fun MainComponent(
     if (showSaveDialog && currentFile != null) {
         currentFile?.let {
             ConfirmationDialogue(recordingFile = it,
-                onDismissRequest = { showSaveDialog = false },
+                onDismissRequest = {
+                    onDeleteAudio(it)
+                    showSaveDialog = false
+                },
                 onSave = { name, recordingFile ->
                     if (onSaveRecording != null) {
                         onSaveRecording(name, recordingFile)
                         showSaveDialog = false
                     }
-                },
-                onDelete = { onDeleteAudio(it) })
+                })
         }
     }
     TopAppBar()
@@ -89,7 +95,15 @@ fun MainComponent(
                     topStart = 20.dp, topEnd = 20.dp
                 ), scrimColor = Color.Unspecified
             ) {
-                AudioList(fileList, onPlayAudio, onDeleteAudio)
+                AudioList(
+                    filesList = fileList,
+                    onPlayAudio = onPlayAudio,
+                    onDeleteAudio = onDeleteAudio,
+                    isPlaying = isPlaying,
+                    onPauseAudio = onPauseAudio,
+                    currentPlayingFile = currentFile,
+                    onResumeAudio = onResumeAudio
+                )
             }
         }
     }

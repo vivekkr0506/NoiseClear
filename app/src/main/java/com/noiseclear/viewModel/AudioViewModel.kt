@@ -39,6 +39,9 @@ class AudioViewModel(private val audioRecordManager: AudioRecordManager) : ViewM
     private val _audioFiles = MutableStateFlow<List<File>>(emptyList())
     val audioFiles: StateFlow<List<File>> = _audioFiles
 
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying: StateFlow<Boolean> get() = _isPlaying
+
 
     fun checkPermission(
         context: Context,
@@ -109,6 +112,7 @@ class AudioViewModel(private val audioRecordManager: AudioRecordManager) : ViewM
     }
 
     fun saveRecording(context: Context,name: String, recordingFile: File) {
+        Log.e("Vivek",name)
         val renamedFile = File(recordingFile.parent, "$name.mp3")
         recordingFile.renameTo(renamedFile)
         updateAudioFiles(context)
@@ -127,9 +131,32 @@ class AudioViewModel(private val audioRecordManager: AudioRecordManager) : ViewM
 
     fun playAudio(context: Context,file: File) {
         try {
-            AudioPlayer(context).playFile(file)
+            AudioPlayer(context).playAudio(file)
         } catch (e: Exception) {
             Log.e("AudioPlay", "Exception: Failed to play audio", e)
+        }
+
+        if (!_isPlaying.value) {
+            AudioPlayer(context).pauseAudio()
+            _isPlaying.value = true
+        }
+    }
+
+    fun pauseAudio(context: Context) {
+        try {
+            AudioPlayer(context).pauseAudio()
+            _isPlaying.value = false
+        } catch (e: Exception) {
+            Log.e("AudioPlay", "Exception: Failed to pause audio", e)
+        }
+    }
+
+    fun resumeAudio(context: Context,file: File) {
+        try {
+            AudioPlayer(context).playAudio(file)
+            _isPlaying.value = true
+        } catch (e: Exception) {
+            Log.e("AudioPlay", "Exception: Failed to resume audio", e)
         }
     }
 }

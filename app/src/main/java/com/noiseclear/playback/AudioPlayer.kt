@@ -11,16 +11,22 @@ class AudioPlayer(
 
     private var player: MediaPlayer? = null
 
-    override fun playFile(file: File) {
+    override fun playAudio(file: File) {
         MediaPlayer.create(context, file.toUri()).apply {
             player = this
             start()
         }
     }
 
+
+
     override fun stop() {
         player?.stop()
         player?.release()
         player = null
+    }
+
+    override fun pauseAudio() {
+        player?.pause()
     }
 }

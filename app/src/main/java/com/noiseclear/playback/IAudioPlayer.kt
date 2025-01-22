@@ -3,6 +3,7 @@ package com.noiseclear.playback
 import java.io.File
 
 interface IAudioPlayer {
-    fun playFile(file: File)
+    fun playAudio(file: File)
     fun stop()
+    fun pauseAudio()
 }

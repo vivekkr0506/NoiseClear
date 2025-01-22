@@ -1,7 +1,5 @@
 package com.noiseclear.composable
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -22,13 +20,11 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ConfirmationDialogue(
     recordingFile: File,
     onDismissRequest: () -> Unit,
-    onSave: (String,File) -> Unit,
-    onDelete: () -> Unit
+    onSave: (String,File) -> Unit
 ) {
 
     val current = LocalDateTime.now()
