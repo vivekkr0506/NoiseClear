@@ -2,18 +2,12 @@ package com.noiseclear
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,9 +33,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.extractor.OpusUtil.SAMPLE_RATE
 import com.noiseclear.composable.AudioList
 import com.noiseclear.composable.AudioRecordAppUI
 import com.noiseclear.composable.ConfirmationDialogue
@@ -48,7 +43,9 @@ import com.noiseclear.composable.NoiseMeter
 import com.noiseclear.composable.TopAppBar
 import com.noiseclear.composable.WaveAnimation
 import com.noiseclear.playback.AudioPlayer
+import com.noiseclear.recorder.AudioRecordManager
 import com.noiseclear.recorder.AudioRecorder
+import com.noiseclear.util.AudioViewModelFactory
 import com.noiseclear.viewModel.AudioViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,9 +55,6 @@ import java.io.File
 class MainActivity : ComponentActivity() {
 
     private var isRecording = false
-    private var isAudioPlaying = false
-    private var noiseLevel: Double = 0.0
-    private var audioRecord : AudioRecord?= null
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (!isGranted) {
@@ -79,22 +73,26 @@ class MainActivity : ComponentActivity() {
     private var audioFile: File? = null
     private var audioFiles = mutableListOf<File>()
 
-
-    private val viewModel: AudioViewModel by viewModels()
-     val RECORDER_SAMPLE_RATE = 44100
-     val AUDIO_SOURCE = MediaRecorder.AudioSource.MIC
-     val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO
-     val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
-     val BUFFER_SIZE_RECORDING = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
+   lateinit var  audioViewModel: AudioViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkPermission()
-        audioRecord = AudioRecord(AUDIO_SOURCE, RECORDER_SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE_RECORDING);
         audioFiles =  getAudioFiles().toMutableList()
+
+        val audioRecordManager = AudioRecordManager()
+        val viewModelFactory = AudioViewModelFactory(audioRecordManager)
+
+        audioViewModel = ViewModelProvider(this, viewModelFactory).get(AudioViewModel::class.java)
+
+
+        val audioDir = File(filesDir, "audio")
+        if (!audioDir.exists()) {
+            audioDir.mkdir()
+        }
         setContent {
-            MainComponent(noiseLevel = noiseLevel,
+            MainComponent(
+                audioViewModel = audioViewModel,
                 isRecording = isRecording,
-                isAudioPlaying = isAudioPlaying,
                 filesList = audioFiles,
                 startRecording = { startRecording() },
                 stopRecording = {
@@ -139,24 +137,17 @@ class MainActivity : ComponentActivity() {
             File(cacheDir, "audio_${System.currentTimeMillis()}.mp3").also {
                 recorder.start(it)
                 audioFile = it
-                // audioFiles.add(it)
             }
+
+            audioViewModel.startRecordingNew()
             isRecording = true
             lifecycleScope.launch(Dispatchers.IO) {
-
-           //     val audioData = ByteArray(bufferSize)
                 while (isRecording) {
-//                     val readResult = recorder.read(audioData, 0, audioData.size)
-//                    if (readResult > 0) {
-//                        noiseLevel = calculateNoiseLevel(audioData)
-//                    }
-
                     setContent {
                         var filesList by remember { mutableStateOf(getAudioFiles()) }
                         MainComponent(
-                            noiseLevel = noiseLevel,
+                            audioViewModel = audioViewModel,
                             isRecording = isRecording,
-                            isAudioPlaying = isAudioPlaying,
                             filesList = audioFiles,
                             startRecording = { startRecording() },
                             stopRecording = {
@@ -196,13 +187,12 @@ class MainActivity : ComponentActivity() {
             audioFile?.let{ file ->
                 NoiseMeter(100.0)
                 MainComponent(
-                    noiseLevel = noiseLevel,
+                    audioViewModel = audioViewModel,
                     isRecording = false,
-                    isAudioPlaying = isAudioPlaying,
                     filesList = audioFiles,
                     startRecording = { startRecording() },
                     stopRecording = {
-                        viewModel.stopRecording()
+                        stopRecording()
                         audioFiles = getAudioFiles().toMutableList()
                     },
                     onPlayAudio = { playAudio(it) },
@@ -219,16 +209,9 @@ class MainActivity : ComponentActivity() {
         Toast.makeText(applicationContext, "Recording Stopped", Toast.LENGTH_SHORT).show()
         isRecording = false
         recorder.stop()
-        noiseLevel = 0.0
+        audioViewModel.stopRecordingNew()
     }
 
-    private fun calculateNoiseLevel(audioData: ByteArray): Double {
-        var total = 0.0
-        for (i in audioData.indices) {
-            total += Math.abs(audioData[i].toInt())
-        }
-        return total / audioData.size.toDouble()
-    }
 
     private fun getAudioFiles(): List<File> {
         return cacheDir.listFiles()?.filter { it.extension == "mp3" }
@@ -251,26 +234,23 @@ class MainActivity : ComponentActivity() {
 
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainComponent(
-    noiseLevel: Double,
+    audioViewModel : AudioViewModel,
     isRecording: Boolean,
-    isAudioPlaying: Boolean,
     filesList: List<File>,
     startRecording: () -> Unit,
     stopRecording: () -> Unit,
     onPlayAudio: (File) -> Unit,
     onDeleteAudio: (File) -> Unit,
     currentFile: File?,
-    onSaveRecording: ((String,File) -> Unit)?
-
-) {
+    onSaveRecording: ((String,File) -> Unit)?) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
-
+    val noiseLevel by audioViewModel.noiseLevel.collectAsState()
+    val isNoiseHigh by audioViewModel.isNoiseHigh.collectAsState()
     LaunchedEffect(currentFile, isRecording) {
         if (currentFile != null && !isRecording) {
             showSaveDialog = true
