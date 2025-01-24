@@ -13,6 +13,7 @@ class AudioRecorder(
 ): IAudioRecorder {
 
     private var recorder: MediaRecorder? = null
+    private val timeLimit = 60 * 1000 // 1 minute
     private fun createRecorder(): MediaRecorder {
         return if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             MediaRecorder(context)
@@ -24,6 +25,7 @@ class AudioRecorder(
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setOutputFile(FileOutputStream(outputFile).fd)
+            setMaxDuration(timeLimit)
 
             prepare()
             start()

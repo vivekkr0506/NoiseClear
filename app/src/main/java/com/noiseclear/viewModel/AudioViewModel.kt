@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.OptIn
 import androidx.core.app.ActivityCompat
@@ -68,7 +69,7 @@ class AudioViewModel(private val audioRecordManager: AudioRecordManager,context:
     @OptIn(UnstableApi::class)
     fun startRecording(context: Context, recorder: AudioRecorder) {
         val firebaseAnalytics = FirebaseAnalytics.getInstance(context)
-
+        val sizeLimit = 1 * 1024 * 1024 // 5 MB limit
         var params = Bundle()
         params.putString(FirebaseAnalytics.Param.SCREEN_NAME, "Hello" as String?)
         params.putString("Name", "Vivek" as String?)
@@ -87,6 +88,23 @@ class AudioViewModel(private val audioRecordManager: AudioRecordManager,context:
             _audioFile.value = newFile
             _isRecording.value = true
             updateAudioFiles(context)
+
+            val monitorThread = Thread {
+                while (_isRecording.value) {
+                    try {
+                        val fileSize = newFile.length()
+                        if (fileSize > sizeLimit) {
+                            _isRecording.value = false
+                            Toast.makeText(context,"Size limit exceeded", Toast.LENGTH_LONG).show()
+                            break
+                        }
+                        Thread.sleep(500)
+                    } catch (e: InterruptedException) {
+                        Log.e("AudioRecord", "Monitoring thread interrupted", e)
+                    }
+                }
+            }
+            monitorThread.start()
         } catch (e: Exception) {
             Log.e("AudioRecord", "Exception: Failed to start recording", e)
         }
