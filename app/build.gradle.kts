@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -50,6 +51,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -66,5 +68,9 @@ dependencies {
     implementation (libs.androidx.media3.common)
 
     implementation (libs.androidx.lifecycle.viewmodel.compose)
+    implementation (platform(libs.firebase.bom))
+
+    implementation (libs.firebase.analytics.ktx)
+    implementation(libs.accompanist.permissions)
 
 }

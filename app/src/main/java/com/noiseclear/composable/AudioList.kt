@@ -1,5 +1,6 @@
 package com.noiseclear.composable
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
@@ -44,50 +44,48 @@ fun AudioList(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = file.name, modifier = Modifier.weight(1f))
-                Row(horizontalArrangement = Arrangement.spacedBy(20.dp),
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (currentPlayingFile == file) {
-                        if (isPlaying) {
-                            Box(modifier = Modifier
-                                    .background(shape = CircleShape, color = Color.LightGray)
-                                    .padding(4.dp), contentAlignment = Alignment.Center
-                            ) {
-                                IconButton(onClick = { onPauseAudio() }) {
-                                    Icon(Icons.Rounded.Clear,
-                                        contentDescription = "Pause Audio",
-                                        tint = Color.Red
-                                    )
-                                }
-                            }
-                        } else {
-                            Box(
-                                modifier = Modifier.background(shape = CircleShape, color = Color.LightGray)
-                                    .padding(4.dp), contentAlignment = Alignment.Center
-                            ) {
-                                IconButton(onClick = { onResumeAudio(currentPlayingFile) }) {
-                                    Icon(Icons.Rounded.PlayArrow,
-                                        contentDescription = "Resume Audio",
-                                        tint = Color.Green
-                                    )
-                                }
+                    if (isPlaying) {
+                        Box(
+                            modifier = Modifier
+                                .background(shape = CircleShape, color = Color.LightGray)
+                                .padding(4.dp), contentAlignment = Alignment.Center
+                        ) {
+                            Log.e("Pause Audio", "onPauseAudio")
+                            IconButton(onClick = { onPauseAudio() }) {
+                                Icon(
+                                    Icons.Rounded.Clear,
+                                    contentDescription = "Pause Audio",
+                                    tint = Color.Red
+                                )
                             }
                         }
                     } else {
                         Box(
-                            modifier = Modifier.background(shape = CircleShape, color = Color.LightGray)
+                            modifier = Modifier
+                                .background(
+                                    shape = CircleShape,
+                                    color = Color.LightGray
+                                )
                                 .padding(4.dp), contentAlignment = Alignment.Center
                         ) {
-                            IconButton(onClick = { onPlayAudio(file) }) {
-                                Icon(Icons.Filled.PlayArrow,
-                                    contentDescription = "Play Audio",
+                            IconButton(onClick = { onResumeAudio(file) }) {
+                                Icon(
+                                    Icons.Rounded.PlayArrow,
+                                    contentDescription = "Resume Audio",
                                     tint = Color.Green
                                 )
                             }
                         }
                     }
+
                     Box(
-                        modifier = Modifier.background(shape = CircleShape, color = Color.LightGray).padding(4.dp)
+                        modifier = Modifier
+                            .background(shape = CircleShape, color = Color.LightGray)
+                            .padding(4.dp)
                     ) {
                         IconButton(onClick = { onDeleteAudio(file) }) {
                             Icon(
