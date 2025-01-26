@@ -77,7 +77,7 @@ fun MainComponent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         WaveAnimation(isRecording)
-        NoiseMeter(noiseLevel = noiseLevel)
+        NoiseMeter(noiseLevel = noiseLevel,isNoiseHigh)
         AudioRecordAppUI(isRecording = isRecording,
             onStartClick = { startRecording() },
             onStopClick = { stopRecording() })

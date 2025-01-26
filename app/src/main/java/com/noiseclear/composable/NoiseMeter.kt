@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun NoiseMeter(noiseLevel: Double) {
+fun NoiseMeter(noiseLevel: Double, isNoiseHigh: Boolean) {
     val maxNoiseLevel = 100f
     Column(
         modifier = Modifier
@@ -28,6 +28,8 @@ fun NoiseMeter(noiseLevel: Double) {
         Spacer(modifier = Modifier.height(16.dp))
 
         NoiseMeterView(noiseLevel = noiseLevel, maxLevel = maxNoiseLevel)
+
+        if(isNoiseHigh) Text(text = "Too much Noise", style = MaterialTheme.typography.labelLarge)
     }
 }
 
