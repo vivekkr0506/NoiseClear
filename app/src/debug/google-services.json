@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "101140446956",
+    "project_id": "noiseclear-test",
+    "storage_bucket": "noiseclear-test.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:101140446956:android:e1c86bbefc3b590de36fc9",
+        "android_client_info": {
+          "package_name": "com.noiseclear"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD1I2Gn4la--WWZsA8v9Q2Re0CDIc9C_o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:101140446956:android:e1c86bbefc3b590de36fc9",
+        "android_client_info": {
+          "package_name": "com.noiseclear.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD1I2Gn4la--WWZsA8v9Q2Re0CDIc9C_o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

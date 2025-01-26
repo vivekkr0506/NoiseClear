@@ -18,14 +18,30 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
+    signingConfigs {
+        create("release") {
+            keyAlias = "noiseclear"
+            keyPassword = "Vivek@1995"
+            storeFile = file("/Users/vivekkumar/AndroidStudioProjects/NoiseClear/noiseclear.jks")
+            storePassword = "Vivek@1995"
+        }
+    }
     buildTypes {
+        debug {
+            isShrinkResources = false
+            isMinifyEnabled = false
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = false
+            isDebuggable = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -72,5 +88,8 @@ dependencies {
 
     implementation (libs.firebase.analytics.ktx)
     implementation(libs.accompanist.permissions)
+
+    testImplementation ("io.mockk:mockk:1.13.5")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
 
 }

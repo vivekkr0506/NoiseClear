@@ -23,8 +23,8 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 
-class AudioViewModel(private val audioRecordManager: AudioRecordManager,context: Context) : ViewModel() {
-
+class AudioViewModel(context: Context) : ViewModel() {
+    private val audioRecordManager=AudioRecordManager()
     private val noiseThreshold = 70.0
 
     private val _noiseLevel = MutableStateFlow(0.0)
@@ -70,7 +70,7 @@ class AudioViewModel(private val audioRecordManager: AudioRecordManager,context:
     fun startRecording(context: Context, recorder: AudioRecorder) {
         val firebaseAnalytics = FirebaseAnalytics.getInstance(context)
         val sizeLimit = 1 * 1024 * 1024 // 5 MB limit
-        var params = Bundle()
+        val params = Bundle()
         params.putString(FirebaseAnalytics.Param.SCREEN_NAME, "Hello" as String?)
         params.putString("Name", "Vivek" as String?)
         firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, params)
@@ -84,7 +84,8 @@ class AudioViewModel(private val audioRecordManager: AudioRecordManager,context:
             }
             startRecordingNew()
             val newFile = File(context.cacheDir, "audio_${System.currentTimeMillis()}.mp3")
-            recorder.start(newFile)
+           // recorder.start(newFile)
+            recorder.startAudio(newFile)
             _audioFile.value = newFile
             _isRecording.value = true
             updateAudioFiles(context)
@@ -191,29 +192,5 @@ class AudioViewModel(private val audioRecordManager: AudioRecordManager,context:
             Log.e("AudioPlay", "Exception: Failed to resume audio", e)
         }
     }
-
-//    fun applyNoiseCancellation(inputFile: File, outputFile: File): Boolean {
-//        try {
-//            val audioInputStream = AudioDispatcherFactory.fromPipe(
-//                inputFile.absolutePath,
-//                44100,  // Sample rate
-//                1024,   // Buffer size
-//                0       // Overlap
-//            )
-//            val noiseReducer = NoiseReducer()
-//            audioInputStream.addAudioProcessor(noiseReducer)
-//
-//            // Write the processed audio to the output file
-//            val wavWriter = WaveformWriter(outputFile)
-//            audioInputStream.addAudioProcessor(wavWriter)
-//
-//            audioInputStream.run()
-//
-//            return true
-//        } catch (e: Exception) {
-//            Log.e("NoiseCancellation", "Failed to process audio: ${e.message}", e)
-//            return false
-//        }
-//    }
 
 }

@@ -16,7 +16,6 @@ import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Firebase
 import com.google.firebase.messaging.messaging
 import com.noiseclear.composable.MainComponent
-import com.noiseclear.recorder.AudioRecordManager
 import com.noiseclear.recorder.AudioRecorder
 import com.noiseclear.util.AudioViewModelFactory
 import com.noiseclear.viewModel.AudioViewModel
@@ -61,8 +60,7 @@ class MainActivity : ComponentActivity() {
 
        // askNotificationPermission()
 
-        val audioRecordManager = AudioRecordManager()
-        val viewModelFactory = AudioViewModelFactory(audioRecordManager,this)
+        val viewModelFactory = AudioViewModelFactory(this)
 
         audioViewModel = ViewModelProvider(this, viewModelFactory).get(AudioViewModel::class.java)
         audioViewModel.checkPermission(this, requestPermissionLauncher)
