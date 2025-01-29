@@ -47,13 +47,15 @@ fun MainComponent(
     val isRecording by audioViewModel.isRecording.collectAsState()
     val fileList by audioViewModel.audioFiles.collectAsState(emptyList())
     val currentFile by audioViewModel.audioFile.collectAsState(null)
-
+    var currentPlayingFile by remember { mutableStateOf<File?>(null) }
     val isPlaying by audioViewModel.isPlaying.collectAsState(false)
+
     LaunchedEffect(currentFile, isRecording) {
         if (currentFile != null && !isRecording) {
             showSaveDialog = true
         }
     }
+
     if (showSaveDialog && currentFile != null) {
         currentFile?.let {
             ConfirmationDialogue(recordingFile = it,
@@ -62,13 +64,12 @@ fun MainComponent(
                     showSaveDialog = false
                 },
                 onSave = { name, recordingFile ->
-                    if (onSaveRecording != null) {
-                        onSaveRecording(name, recordingFile)
-                        showSaveDialog = false
-                    }
+                    onSaveRecording?.invoke(name, recordingFile)
+                    showSaveDialog = false
                 })
         }
     }
+
     TopAppBar()
     Column(
         modifier = Modifier
@@ -78,10 +79,12 @@ fun MainComponent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         WaveAnimation(isRecording)
-        NoiseMeter(noiseLevel = noiseLevel,isNoiseHigh)
-        AudioRecordAppUI(isRecording = isRecording,
+        NoiseMeter(noiseLevel = noiseLevel, isNoiseHigh)
+        AudioRecordAppUI(
+            isRecording = isRecording,
             onStartClick = { startRecording() },
-            onStopClick = { stopRecording() })
+            onStopClick = { stopRecording() }
+        )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
             showBottomSheet = true
@@ -92,18 +95,27 @@ fun MainComponent(
             ModalBottomSheet(
                 onDismissRequest = {
                     showBottomSheet = false
-                }, sheetState = sheetState, shape = RoundedCornerShape(
-                    topStart = 20.dp, topEnd = 20.dp
-                ), scrimColor = Color.Unspecified
+                },
+                sheetState = sheetState,
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                scrimColor = Color.Unspecified
             ) {
                 AudioList(
                     filesList = fileList,
-                    onPlayAudio = onPlayAudio,
+                    onPlayAudio = { file ->
+                        currentPlayingFile = file
+                        onPlayAudio(file)
+                    },
+                    onPauseAudio = {
+                        currentPlayingFile = null
+                        onPauseAudio()
+                    },
                     onDeleteAudio = onDeleteAudio,
-                    isPlaying = isPlaying,
-                    onPauseAudio = onPauseAudio,
-                    currentPlayingFile = currentFile,
-                    onResumeAudio = onResumeAudio
+                    isPlaying = isPlaying && currentPlayingFile != null,
+                    currentPlayingFile = currentPlayingFile,
+                    onUpdatePlayingFile = { file ->
+                        currentPlayingFile = file
+                    }
                 )
             }
         }
