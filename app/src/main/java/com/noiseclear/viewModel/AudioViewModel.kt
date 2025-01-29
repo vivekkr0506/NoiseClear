@@ -118,7 +118,7 @@ class AudioViewModel(context: Context) : ViewModel() {
         stopRecordingNew()
     }
 
-    private fun updateAudioFiles(context: Context) {
+     fun updateAudioFiles(context: Context) {
         val audioFiles = getAudioFiles(context)
         _audioFiles.value = audioFiles
     }

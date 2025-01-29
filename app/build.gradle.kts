@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+    alias (libs.plugins.hilt)
+    id ("com.google.devtools.ksp")
 }
 
 android {
@@ -54,6 +56,13 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+       // unitTests.includeAndroidResources = true
+        unitTests.all {
+            it.useJUnitPlatform()
+        }
+    }
 }
 
 dependencies {
@@ -89,7 +98,15 @@ dependencies {
     implementation (libs.firebase.analytics.ktx)
     implementation(libs.accompanist.permissions)
 
-    testImplementation ("io.mockk:mockk:1.13.5")
-    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+    implementation(libs.android.wave.recorder)
+
+    implementation (libs.hilt.navigation.compose)
+    implementation (libs.hilt.android)
+    ksp (libs.hilt.compiler)
+
+    testImplementation ("junit:junit:4.13.2")
+    testImplementation ("io.mockk:mockk:1.13.3")
+    testImplementation( "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.0")
+    testImplementation ("com.google.truth:truth:1.1.3")
 
 }

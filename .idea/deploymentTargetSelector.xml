@@ -13,7 +13,16 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="testStartRecordingWhenPermissionGranted()">
+      <SelectionState runConfigName="saveRecording renames file and updates audioFiles()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="ExampleUnitTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="checkPermission launches permission request if not granted()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="startRecording updates isRecording and audioFile states()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

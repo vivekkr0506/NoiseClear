@@ -19,8 +19,10 @@ import com.noiseclear.composable.MainComponent
 import com.noiseclear.recorder.AudioRecorder
 import com.noiseclear.util.AudioViewModelFactory
 import com.noiseclear.viewModel.AudioViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
 @UnstableApi
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val recorder by lazy { AudioRecorder(applicationContext) }
