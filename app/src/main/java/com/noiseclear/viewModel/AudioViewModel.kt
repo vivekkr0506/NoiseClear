@@ -17,6 +17,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.noiseclear.playback.AudioPlayer
 import com.noiseclear.recorder.AudioRecordManager
 import com.noiseclear.recorder.AudioRecorder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -113,7 +114,7 @@ class AudioViewModel(context: Context) : ViewModel() {
 
     @OptIn(UnstableApi::class)
     fun stopRecording(recorder: AudioRecorder) {
-        recorder.stop()
+        recorder.stopRecording()
         _isRecording.value = false
         stopRecordingNew()
     }
@@ -129,7 +130,7 @@ class AudioViewModel(context: Context) : ViewModel() {
     }
 
     private fun startRecordingNew() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             audioRecordManager.startRecording { db ->
                 _noiseLevel.value = db
                 _isNoiseHigh.value = db > noiseThreshold

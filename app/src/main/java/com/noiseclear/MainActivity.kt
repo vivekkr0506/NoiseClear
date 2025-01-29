@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        recorder.stop()
+        recorder.stopRecording()
     }
 
     private fun askNotificationPermission() {

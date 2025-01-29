@@ -38,6 +38,9 @@ class AudioRecorder(
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setOutputFile(FileOutputStream(outputFile).fd)
             setMaxDuration(timeLimit)
+            setAudioSamplingRate(44100)
+            setAudioEncodingBitRate(128000)
+            setAudioChannels(1)
 
             prepare()
             start()
@@ -95,7 +98,7 @@ class AudioRecorder(
         }
         thread.start()
     }
-    override fun stop() {
+    override fun stopRecording() {
         isRecording = false
         audioRecord?.apply {
             stop()
