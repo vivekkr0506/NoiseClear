@@ -35,67 +35,75 @@ fun AudioList(
     isPlaying: Boolean,
     currentPlayingFile: File?
 ) {
-    LazyColumn(modifier = Modifier.fillMaxHeight(0.5f)) {
-        items(filesList) { file ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = file.name, modifier = Modifier.weight(1f))
+    if(filesList.isNotEmpty()){
+        LazyColumn(modifier = Modifier.fillMaxHeight(0.5f)) {
+            items(filesList) { file ->
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isPlaying) {
+                    Text(text = file.name, modifier = Modifier.weight(1f))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isPlaying) {
+                            Box(
+                                modifier = Modifier
+                                    .background(shape = CircleShape, color = Color.LightGray)
+                                    .padding(4.dp), contentAlignment = Alignment.Center
+                            ) {
+                                Log.e("Pause Audio", "onPauseAudio")
+                                IconButton(onClick = { onPauseAudio() }) {
+                                    Icon(
+                                        Icons.Rounded.Clear,
+                                        contentDescription = "Pause Audio",
+                                        tint = Color.Red
+                                    )
+                                }
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        shape = CircleShape,
+                                        color = Color.LightGray
+                                    )
+                                    .padding(4.dp), contentAlignment = Alignment.Center
+                            ) {
+                                IconButton(onClick = { onResumeAudio(file) }) {
+                                    Icon(
+                                        Icons.Rounded.PlayArrow,
+                                        contentDescription = "Resume Audio",
+                                        tint = Color.Green
+                                    )
+                                }
+                            }
+                        }
+
                         Box(
                             modifier = Modifier
                                 .background(shape = CircleShape, color = Color.LightGray)
-                                .padding(4.dp), contentAlignment = Alignment.Center
+                                .padding(4.dp)
                         ) {
-                            Log.e("Pause Audio", "onPauseAudio")
-                            IconButton(onClick = { onPauseAudio() }) {
+                            IconButton(onClick = { onDeleteAudio(file) }) {
                                 Icon(
-                                    Icons.Rounded.Clear,
-                                    contentDescription = "Pause Audio",
-                                    tint = Color.Red
+                                    Icons.Filled.Delete, contentDescription = "Delete Audio"
                                 )
                             }
-                        }
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    shape = CircleShape,
-                                    color = Color.LightGray
-                                )
-                                .padding(4.dp), contentAlignment = Alignment.Center
-                        ) {
-                            IconButton(onClick = { onResumeAudio(file) }) {
-                                Icon(
-                                    Icons.Rounded.PlayArrow,
-                                    contentDescription = "Resume Audio",
-                                    tint = Color.Green
-                                )
-                            }
-                        }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .background(shape = CircleShape, color = Color.LightGray)
-                            .padding(4.dp)
-                    ) {
-                        IconButton(onClick = { onDeleteAudio(file) }) {
-                            Icon(
-                                Icons.Filled.Delete, contentDescription = "Delete Audio"
-                            )
                         }
                     }
                 }
             }
         }
+    }else{
+        Box(modifier = Modifier.fillMaxHeight(0.5f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Text(text = "No recording found!!")
+        }
+
     }
+
 }
 
