@@ -82,13 +82,13 @@ class AudioViewModel(context: Context) : ViewModel() {
             ) {
                 return
             }
-            startRecordingNew()
             val newFile = File(context.cacheDir, "audio_${System.currentTimeMillis()}.mp3")
-           // recorder.start(newFile)
-            recorder.startAudio(newFile)
+            recorder.start(newFile)
+           // recorder.startAudio(newFile)
             _audioFile.value = newFile
             _isRecording.value = true
             updateAudioFiles(context)
+            startRecordingNew()
 
             val monitorThread = Thread {
                 while (_isRecording.value) {

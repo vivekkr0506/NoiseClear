@@ -59,7 +59,7 @@ fun AudioList(
                             ) {
                                 IconButton(onClick = {
                                     onPauseAudio()
-                                    onUpdatePlayingFile(null) // Reset the current playing file
+                                   // onUpdatePlayingFile(null) // Reset the current playing file
                                 }) {
                                     Icon(
                                         Icons.Rounded.Clear,
