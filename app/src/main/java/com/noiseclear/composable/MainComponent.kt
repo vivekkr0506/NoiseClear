@@ -22,23 +22,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.util.UnstableApi
+import com.noiseclear.R
 import com.noiseclear.viewModel.AudioViewModel
 import java.io.File
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainComponent(
-    audioViewModel: AudioViewModel = hiltViewModel(),
-    startRecording: () -> Unit,
-    stopRecording: () -> Unit,
-    onPlayAudio: (File) -> Unit,
-    onDeleteAudio: (File) -> Unit,
-    onSaveRecording: ((String, File) -> Unit)?,
-    onPauseAudio: () -> Unit,
-    onResumeAudio: (File) -> Unit
-) {
+fun MainComponent(audioViewModel: AudioViewModel = hiltViewModel()) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
@@ -60,11 +55,11 @@ fun MainComponent(
         currentFile?.let {
             ConfirmationDialogue(recordingFile = it,
                 onDismissRequest = {
-                    onDeleteAudio(it)
+                    (audioViewModel::deleteAudio)(it)
                     showSaveDialog = false
                 },
                 onSave = { name, recordingFile ->
-                    onSaveRecording?.invoke(name, recordingFile)
+                    audioViewModel::saveRecording.invoke(name, recordingFile)
                     showSaveDialog = false
                 })
         }
@@ -80,16 +75,14 @@ fun MainComponent(
     ) {
         WaveAnimation(isRecording)
         NoiseMeter(noiseLevel = noiseLevel, isNoiseHigh)
-        AudioRecordAppUI(
-            isRecording = isRecording,
-            onStartClick = { startRecording() },
-            onStopClick = { stopRecording() }
-        )
+
+        MicAnimation(isRecording, audioViewModel::stopRecording,  audioViewModel::startRecording)
+
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
             showBottomSheet = true
         }) {
-            Text("Recording List")
+            Text(stringResource(R.string.recording_list))
         }
         if (showBottomSheet) {
             ModalBottomSheet(
@@ -104,13 +97,13 @@ fun MainComponent(
                     filesList = fileList,
                     onPlayAudio = { file ->
                         currentPlayingFile = file
-                        onPlayAudio(file)
+                        (audioViewModel::playAudio)(file)
                     },
                     onPauseAudio = {
                         currentPlayingFile = null
-                        onPauseAudio()
+                        (audioViewModel::pauseAudio)()
                     },
-                    onDeleteAudio = onDeleteAudio,
+                    onDeleteAudio = audioViewModel::deleteAudio,
                     isPlaying = isPlaying && currentPlayingFile != null,
                     currentPlayingFile = currentPlayingFile,
                     onUpdatePlayingFile = { file ->

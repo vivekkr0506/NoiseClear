@@ -1,31 +1,35 @@
 package com.noiseclear.viewModel
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.OptIn
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.noiseclear.playback.AudioPlayer
-import com.noiseclear.recorder.AudioRecordManager
 import com.noiseclear.recorder.AudioRecorder
+import com.noiseclear.util.FILE_SIZE_LIMIT
+import com.noiseclear.util.NOISE_THRESHOLD
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
+import javax.inject.Inject
 
 
-class AudioViewModel(context: Context) : ViewModel() {
-    private val audioRecordManager=AudioRecordManager()
-    private val noiseThreshold = 70.0
+@SuppressLint("UnsafeOptInUsageError")
+@HiltViewModel
+class AudioViewModel @Inject constructor(
+    val recorder: AudioRecorder,
+    @ApplicationContext private val context: Context
+) : ViewModel() {
 
     private val _noiseLevel = MutableStateFlow(0.0)
     val noiseLevel: StateFlow<Double> = _noiseLevel
@@ -49,52 +53,30 @@ class AudioViewModel(context: Context) : ViewModel() {
         updateAudioFiles(context)
     }
 
-    fun checkPermission(
-        context: Context,
-        requestPermissionLauncher: ActivityResultLauncher<String>
-    ) {
-        when {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED -> {
-            }
-
-            else -> {
-                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            }
-        }
-    }
 
     @OptIn(UnstableApi::class)
-    fun startRecording(context: Context, recorder: AudioRecorder) {
-        val firebaseAnalytics = FirebaseAnalytics.getInstance(context)
-        val sizeLimit = 1 * 1024 * 1024 // 5 MB limit
-        val params = Bundle()
-        params.putString(FirebaseAnalytics.Param.SCREEN_NAME, "Hello" as String?)
-        params.putString("Name", "Vivek" as String?)
-        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, params)
-
+     fun startRecording() {
         try {
-            if (ActivityCompat.checkSelfPermission(
-                    context, Manifest.permission.RECORD_AUDIO
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 return
             }
             val newFile = File(context.cacheDir, "audio_${System.currentTimeMillis()}.mp3")
             recorder.start(newFile)
-           // recorder.startAudio(newFile)
             _audioFile.value = newFile
             _isRecording.value = true
             updateAudioFiles(context)
-            startRecordingNew()
 
+            viewModelScope.launch {
+                recorder.getNoiseLabel{ db ->
+                    _noiseLevel.value = db
+                    _isNoiseHigh.value = db > NOISE_THRESHOLD
+                }
+            }
             val monitorThread = Thread {
                 while (_isRecording.value) {
                     try {
                         val fileSize = newFile.length()
-                        if (fileSize > sizeLimit) {
+                        if (fileSize > FILE_SIZE_LIMIT) {
                             _isRecording.value = false
                             Toast.makeText(context,"Size limit exceeded", Toast.LENGTH_LONG).show()
                             break
@@ -112,10 +94,10 @@ class AudioViewModel(context: Context) : ViewModel() {
     }
 
     @OptIn(UnstableApi::class)
-    fun stopRecording(recorder: AudioRecorder) {
+    fun stopRecording() {
         recorder.stop()
         _isRecording.value = false
-        stopRecordingNew()
+        _noiseLevel.value = 0.0
     }
 
      fun updateAudioFiles(context: Context) {
@@ -128,27 +110,14 @@ class AudioViewModel(context: Context) : ViewModel() {
             ?.sortedByDescending { it.lastModified() } ?: emptyList()
     }
 
-    private fun startRecordingNew() {
-        viewModelScope.launch {
-            audioRecordManager.startRecording { db ->
-                _noiseLevel.value = db
-                _isNoiseHigh.value = db > noiseThreshold
-            }
-        }
-    }
 
-    private fun stopRecordingNew() {
-        audioRecordManager.stopRecording()
-        _noiseLevel.value = 0.0
-    }
-
-    fun saveRecording(context: Context,name: String, recordingFile: File) {
+    fun saveRecording(name: String, recordingFile: File) {
         val renamedFile = File(recordingFile.parent, "$name.mp3")
         recordingFile.renameTo(renamedFile)
         updateAudioFiles(context)
     }
 
-    fun deleteAudio(context: Context,file: File) {
+    fun deleteAudio(file: File) {
         try {
             if (file.exists()) {
                 file.delete()
@@ -159,7 +128,7 @@ class AudioViewModel(context: Context) : ViewModel() {
         }
     }
 
-    fun playAudio(context: Context,file: File) {
+    fun playAudio(file: File) {
         try {
             AudioPlayer(context).playAudio(file)
         } catch (e: Exception) {
@@ -172,7 +141,7 @@ class AudioViewModel(context: Context) : ViewModel() {
         }
     }
 
-    fun pauseAudio(context: Context) {
+    fun pauseAudio() {
         try {
             Log.e("AudioPlay", "Exception: Failed to pause audio" )
             _isPlaying.value = false

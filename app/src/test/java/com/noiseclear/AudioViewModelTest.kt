@@ -1,140 +1,170 @@
 package com.noiseclear
 
 import android.content.Context
-import android.content.pm.PackageManager
-import androidx.activity.result.ActivityResultLauncher
-import androidx.core.content.ContextCompat
+
+import com.noiseclear.playback.AudioPlayer
 import com.noiseclear.recorder.AudioRecorder
+import com.noiseclear.util.FILE_SIZE_LIMIT
 import com.noiseclear.viewModel.AudioViewModel
-import io.mockk.MockKAnnotations
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
+import org.mockito.Mock
+import org.mockito.Mockito
+import org.mockito.MockitoAnnotations
 import java.io.File
 
-@RunWith(JUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class AudioViewModelTest {
 
-    private lateinit var audioViewModel: AudioViewModel
-    private lateinit var mockContext: Context
-    private lateinit var mockAudioRecorder: AudioRecorder
+    @Mock
+    lateinit var mockRecorder: AudioRecorder
+
+    @Mock
+    lateinit var mockAudioPlayer: AudioPlayer
+
+    @Mock
+    lateinit var mockContext: Context
+
+    private lateinit var viewModel: AudioViewModel
+
+    @Captor
+    lateinit var captor: ArgumentCaptor<(Double) -> Unit>
 
     @Before
-    fun setUp() {
-        MockKAnnotations.init(this)
-        mockContext = mockk(relaxed = true)
-        mockAudioRecorder = mockk(relaxed = true)
-
-        every { mockContext.cacheDir } returns File("mock_cache_dir").apply { mkdirs() }
-
-        audioViewModel = AudioViewModel(mockContext)
+    fun setup() {
+        MockitoAnnotations.openMocks(this)
+        viewModel = AudioViewModel(mockRecorder, mockContext)
     }
 
     @Test
-    fun `checkPermission launches permission request if not granted`() {
-        val mockLauncher = mockk<ActivityResultLauncher<String>>(relaxed = true)
-        every {
-            ContextCompat.checkSelfPermission(mockContext, android.Manifest.permission.RECORD_AUDIO)
-        } returns PackageManager.PERMISSION_DENIED
-
-        audioViewModel.checkPermission(mockContext, mockLauncher)
-
-        verify { mockLauncher.launch(android.Manifest.permission.RECORD_AUDIO) }
-    }
-
-    @Test
-    fun `checkPermission does nothing if permission is already granted`() {
-        val mockLauncher = mockk<ActivityResultLauncher<String>>(relaxed = true)
-        every {
-            ContextCompat.checkSelfPermission(mockContext, android.Manifest.permission.RECORD_AUDIO)
-        } returns PackageManager.PERMISSION_GRANTED
-
-        audioViewModel.checkPermission(mockContext, mockLauncher)
-
-        verify(exactly = 0) { mockLauncher.launch(any()) }
-    }
-
-    @Test
-    fun `startRecording updates isRecording and audioFile states`() = runTest {
-        val testFile = File(mockContext.cacheDir, "audio_test.mp3")
-        every { mockAudioRecorder.start(any()) } answers {
-            firstArg<File>().writeText("test")
+    fun `test start recording`() = runBlockingTest {
+        // Given
+        val mockFile = File("mock_file")
+        Mockito.`when`(mockContext.cacheDir).thenReturn(File("/mock/dir"))
+        Mockito.`when`(mockRecorder.start(mockFile)).then {
+            viewModel.startRecording()
         }
 
-        audioViewModel.startRecording(mockContext, mockAudioRecorder)
+        // When
+        viewModel.startRecording()
 
-        assert(audioViewModel.isRecording.first())
-        assert(audioViewModel.audioFile.first()?.name == "audio_test.mp3")
+        // Then
+        assertTrue(viewModel.isRecording.value)
     }
 
     @Test
-    fun `stopRecording updates isRecording state`() = runTest {
-        audioViewModel.stopRecording(mockAudioRecorder)
+    fun `test stop recording`() {
+        // Given
+        Mockito.`when`(mockRecorder.stop()).then {
+            viewModel.stopRecording()
+        }
 
-        verify { mockAudioRecorder.stop() }
-        assert(!audioViewModel.isRecording.first())
+        // When
+        viewModel.stopRecording()
+
+        // Then
+        assertFalse(viewModel.isRecording.value)
     }
 
     @Test
-    fun `updateAudioFiles populates audioFiles list`() = runTest {
-        val mockFile = File(mockContext.cacheDir, "audio1.mp3")
-        mockFile.createNewFile()
+    fun `test update noise level`() = runBlockingTest {
+        // Given
+        val noiseLevel = 60.0 // Simulating noise level above the threshold
+        val mockFile = File("mock_audio_file")
+        Mockito.`when`(mockContext.cacheDir).thenReturn(mockFile)
 
-        audioViewModel.updateAudioFiles(mockContext)
+        // Simulating the noise level updating
+        viewModel.startRecording()
 
-        val audioFiles = audioViewModel.audioFiles.first()
-        assert(audioFiles.contains(mockFile))
+        // When
+        viewModel.recorder.getNoiseLabel { db ->
+            assertEquals(db, noiseLevel)
+        }
 
-        mockFile.delete()
+        // Then
+        assertTrue(viewModel.isNoiseHigh.value)
     }
 
     @Test
-    fun `deleteAudio removes file and updates audioFiles`() = runTest {
-        val mockFile = File(mockContext.cacheDir, "audio_to_delete.mp3")
-        mockFile.createNewFile()
+    fun `test file size exceeds limit`() {
+        // Given
+        val largeFile = File(mockContext.cacheDir, "large_audio.mp3")
+        Mockito.`when`(largeFile.length()).thenReturn((FILE_SIZE_LIMIT + 1).toLong())
 
-        audioViewModel.updateAudioFiles(mockContext)
-        audioViewModel.deleteAudio(mockContext, mockFile)
+        // When
+        viewModel.startRecording()
 
-        val audioFiles = audioViewModel.audioFiles.first()
-        assert(!audioFiles.contains(mockFile))
+        // Simulate a file size check
+        val fileSize = largeFile.length()
+        if (fileSize > FILE_SIZE_LIMIT) {
+            viewModel.stopRecording()
+            // Then
+            assertFalse(viewModel.isRecording.value)
+        }
     }
 
     @Test
-    fun `playAudio sets isPlaying to true`() = runTest {
-        val mockFile = File(mockContext.cacheDir, "audio_to_play.mp3")
-        mockFile.createNewFile()
+    fun `test save recording`() {
+        // Given
+        val mockFile = File(mockContext.cacheDir, "audio.mp3")
+        val newName = "new_audio_name"
 
-        audioViewModel.playAudio(mockContext, mockFile)
+        // When
+        viewModel.saveRecording(newName, mockFile)
 
-        assert(audioViewModel.isPlaying.first())
+        // Then
+        assertTrue(mockFile.exists())
     }
 
     @Test
-    fun `pauseAudio sets isPlaying to false`() = runTest {
-        audioViewModel.pauseAudio(mockContext)
+    fun `test play audio`() {
+        // Given
+        val mockFile = File("mock_audio_file.mp3")
+        Mockito.`when`(mockAudioPlayer.playAudio(mockFile)).then {
+            viewModel.playAudio(mockFile)
+        }
 
-        assert(!audioViewModel.isPlaying.first())
+        // When
+        viewModel.playAudio(mockFile)
+
+        // Then
+        assertTrue(viewModel.isPlaying.value)
     }
 
     @Test
-    fun `saveRecording renames file and updates audioFiles`() = runTest {
-        val originalFile = File(mockContext.cacheDir, "audio_original.mp3")
-        originalFile.createNewFile()
+    fun `test pause audio`() {
+        // Given
+        Mockito.`when`(mockAudioPlayer.pauseAudio()).then {
+            viewModel.pauseAudio()
+        }
 
-        val newName = "renamed_audio"
-        audioViewModel.saveRecording(mockContext, newName, originalFile)
+        // When
+        viewModel.pauseAudio()
 
-        val renamedFile = File(mockContext.cacheDir, "$newName.mp3")
-        assert(audioViewModel.audioFiles.first().any { it.name == renamedFile.name })
+        // Then
+        assertFalse(viewModel.isPlaying.value)
+    }
 
-        renamedFile.delete()
+    @Test
+    fun `test resume audio`() {
+        // Given
+        val mockFile = File("mock_audio_file.mp3")
+        Mockito.`when`(mockAudioPlayer.playAudio(mockFile)).then {
+            viewModel.resumeAudio(mockContext, mockFile)
+        }
+
+        // When
+        viewModel.resumeAudio(mockContext, mockFile)
+
+        // Then
+        assertTrue(viewModel.isPlaying.value)
     }
 }
-

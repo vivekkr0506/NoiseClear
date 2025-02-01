@@ -4,7 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
     alias (libs.plugins.hilt)
-    id ("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.kapt")
+    id ("io.sentry.android.gradle") version "5.0.0"
 }
 
 android {
@@ -84,6 +85,11 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    testImplementation (libs.mockito.core)
+    testImplementation (libs.mockito.android)
+    testImplementation (libs.androidx.hilt.lifecycle.viewmodel.testing)
+    testImplementation (libs.kotlinx.coroutines.test)
     //Dot Lottie
     implementation(libs.dotlottie.android)
     implementation(libs.lottie.compose)
@@ -102,11 +108,7 @@ dependencies {
 
     implementation (libs.hilt.navigation.compose)
     implementation (libs.hilt.android)
-    ksp (libs.hilt.compiler)
 
-    testImplementation ("junit:junit:4.13.2")
-    testImplementation ("io.mockk:mockk:1.13.3")
-    testImplementation( "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.0")
-    testImplementation ("com.google.truth:truth:1.1.3")
+    kapt(libs.hilt.compiler)
 
 }

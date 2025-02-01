@@ -15,9 +15,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.io.File
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 
 @Composable
@@ -26,12 +23,7 @@ fun ConfirmationDialogue(
     onDismissRequest: () -> Unit,
     onSave: (String,File) -> Unit
 ) {
-
-    val current = LocalDateTime.now()
-
-    val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
-    val formatted = current.format(formatter)
-    var audioName by remember { mutableStateOf("audio_$formatted") }
+    var audioName by remember { mutableStateOf("audio_${System.currentTimeMillis()}") }
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text("Rename Audio") },
