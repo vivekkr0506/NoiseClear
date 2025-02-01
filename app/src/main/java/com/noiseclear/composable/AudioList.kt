@@ -18,10 +18,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.noiseclear.R
 import java.io.File
 
 @Composable
@@ -34,6 +40,8 @@ fun AudioList(
     currentPlayingFile: File?,
     onUpdatePlayingFile: (File?) -> Unit
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var fileToDelete by remember { mutableStateOf<File?>(null) }
     if (filesList.isNotEmpty()) {
         LazyColumn(modifier = Modifier.fillMaxHeight(0.5f)) {
             items(filesList) { file ->
@@ -63,7 +71,7 @@ fun AudioList(
                                 }) {
                                     Icon(
                                         Icons.Rounded.Clear,
-                                        contentDescription = "Pause Audio",
+                                        contentDescription = stringResource(R.string.pause_audi),
                                         tint = Color.Red
                                     )
                                 }
@@ -82,7 +90,7 @@ fun AudioList(
                                 }) {
                                     Icon(
                                         Icons.Rounded.PlayArrow,
-                                        contentDescription = "Play Audio",
+                                        contentDescription = stringResource(R.string.play_audio),
                                         tint = Color.Green
                                     )
                                 }
@@ -95,10 +103,13 @@ fun AudioList(
                                 .background(shape = CircleShape, color = Color.LightGray)
                                 .padding(4.dp)
                         ) {
-                            IconButton(onClick = { onDeleteAudio(file) }) {
+                            IconButton(onClick = {
+                                fileToDelete = file
+                                showDeleteDialog = true
+                            }) {
                                 Icon(
                                     Icons.Filled.Delete,
-                                    contentDescription = "Delete Audio"
+                                    contentDescription = stringResource(R.string.delete_audio)
                                 )
                             }
                         }
@@ -113,9 +124,21 @@ fun AudioList(
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "No recording found!!")
+            Text(text = stringResource(R.string.no_recording))
         }
     }
+    DeleteConfirmationDialog(
+        showDialog = showDeleteDialog,
+        onDismiss = { showDeleteDialog = false },
+        onConfirm = {
+            fileToDelete?.let { onDeleteAudio(it) }
+            fileToDelete = null
+        },
+        title = stringResource(R.string.delete_confirmation),
+        message = stringResource(R.string.are_you_sure)
+    )
 }
+
+
 
 
