@@ -23,11 +23,14 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
             }
         }
-    override fun onCreate(savedInstanceState: Bundle?) {
+
+    val onBackPress = {
+        this.onBackPressedDispatcher.onBackPressed()}
+        override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkPermission(this, requestPermissionLauncher)
         setContent {
-            MainComponent()
+            MainComponent(onBackPress)
         }
     }
 

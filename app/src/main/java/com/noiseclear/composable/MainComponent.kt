@@ -33,7 +33,7 @@ import java.io.File
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainComponent(audioViewModel: AudioViewModel = hiltViewModel()) {
+fun MainComponent(onBackPress: () -> Unit ,audioViewModel : AudioViewModel = hiltViewModel()) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
@@ -65,7 +65,7 @@ fun MainComponent(audioViewModel: AudioViewModel = hiltViewModel()) {
         }
     }
 
-    TopAppBar()
+    TopAppBar(onBackPress)
     Column(
         modifier = Modifier
             .fillMaxSize()
