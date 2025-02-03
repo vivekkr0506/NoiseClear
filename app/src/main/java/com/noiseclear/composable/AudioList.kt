@@ -1,8 +1,10 @@
 package com.noiseclear.composable
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.noiseclear.R
 import java.io.File
+import java.util.Locale
 
 @Composable
 fun AudioList(
@@ -38,82 +42,98 @@ fun AudioList(
     onDeleteAudio: (File) -> Unit,
     isPlaying: Boolean,
     currentPlayingFile: File?,
-    onUpdatePlayingFile: (File?) -> Unit
+    onUpdatePlayingFile: (File?) -> Unit,
+    audioProgress: Float,
+    audioDuration: Float
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var fileToDelete by remember { mutableStateOf<File?>(null) }
     if (filesList.isNotEmpty()) {
         LazyColumn(modifier = Modifier.fillMaxHeight(0.5f)) {
             items(filesList) { file ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = file.name, modifier = Modifier.weight(1f))
 
+                Column(modifier = Modifier.border(2.dp, color = Color.Red)){
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (currentPlayingFile?.absolutePath == file.absolutePath && isPlaying) {
-                            // Pause button if this file is playing
-                            Box(
-                                modifier = Modifier
-                                    .background(shape = CircleShape, color = Color.LightGray)
-                                    .padding(4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                IconButton(onClick = {
-                                    onPauseAudio()
-                                   // onUpdatePlayingFile(null) // Reset the current playing file
-                                }) {
-                                    Icon(
-                                        Icons.Rounded.Clear,
-                                        contentDescription = stringResource(R.string.pause_audi),
-                                        tint = Color.Red
-                                    )
-                                }
-                            }
-                        } else {
-                            // Play button for this file
-                            Box(
-                                modifier = Modifier
-                                    .background(shape = CircleShape, color = Color.LightGray)
-                                    .padding(4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                IconButton(onClick = {
-                                    onUpdatePlayingFile(file) // Update the current playing file
-                                    onPlayAudio(file) // Play the selected file
-                                }) {
-                                    Icon(
-                                        Icons.Rounded.PlayArrow,
-                                        contentDescription = stringResource(R.string.play_audio),
-                                        tint = Color.Green
-                                    )
-                                }
-                            }
-                        }
+                        Text(text = file.name, modifier = Modifier.weight(1f))
 
-                        // Delete button
-                        Box(
-                            modifier = Modifier
-                                .background(shape = CircleShape, color = Color.LightGray)
-                                .padding(4.dp)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(20.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(onClick = {
-                                fileToDelete = file
-                                showDeleteDialog = true
-                            }) {
-                                Icon(
-                                    Icons.Filled.Delete,
-                                    contentDescription = stringResource(R.string.delete_audio)
-                                )
+                            if (currentPlayingFile?.absolutePath == file.absolutePath && isPlaying) {
+                                // Pause button if this file is playing
+                                Box(
+                                    modifier = Modifier
+                                        .background(shape = CircleShape, color = Color.LightGray)
+                                        .padding(4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    IconButton(onClick = {
+                                        onPauseAudio()
+                                        // onUpdatePlayingFile(null) // Reset the current playing file
+                                    }) {
+                                        Icon(
+                                            Icons.Rounded.Clear,
+                                            contentDescription = stringResource(R.string.pause_audi),
+                                            tint = Color.Red
+                                        )
+                                    }
+                                }
+                            } else {
+                                // Play button for this file
+                                Box(
+                                    modifier = Modifier
+                                        .background(shape = CircleShape, color = Color.LightGray)
+                                        .padding(4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    IconButton(onClick = {
+                                        onUpdatePlayingFile(file) // Update the current playing file
+                                        onPlayAudio(file) // Play the selected file
+                                    }) {
+                                        Icon(
+                                            Icons.Rounded.PlayArrow,
+                                            contentDescription = stringResource(R.string.play_audio),
+                                            tint = Color.Green
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Delete button
+                            Box(
+                                modifier = Modifier
+                                    .background(shape = CircleShape, color = Color.LightGray)
+                                    .padding(4.dp)
+                            ) {
+                                IconButton(onClick = {
+                                    fileToDelete = file
+                                    showDeleteDialog = true
+                                }) {
+                                    Icon(
+                                        Icons.Filled.Delete,
+                                        contentDescription = stringResource(R.string.delete_audio)
+                                    )
+                                }
                             }
                         }
                     }
+                    if (currentPlayingFile?.absolutePath == file.absolutePath && isPlaying) {
+                        Column(modifier = Modifier.padding(6.dp)) {
+                            LinearProgressIndicator(
+                                progress = { audioProgress },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Text(
+                                text = String.format(Locale("en"), "%02d:%02d / %02d:%02d", (audioProgress * audioDuration).toInt() / 60, (audioProgress * audioDuration).toInt() % 60, audioDuration.toInt() / 60, audioDuration.toInt() % 60),
+                                modifier = Modifier.align(Alignment.End)
+                            )
+                        }}
                 }
             }
         }

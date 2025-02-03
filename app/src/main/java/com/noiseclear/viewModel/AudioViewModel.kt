@@ -49,6 +49,14 @@ class AudioViewModel @Inject constructor(
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> get() = _isPlaying
 
+    private val _audioProgress = MutableStateFlow(0f)
+    val audioProgress: StateFlow<Float> = _audioProgress
+
+    private val _audioDuration = MutableStateFlow(0f)
+    val audioDuration: StateFlow<Float> = _audioDuration
+
+    private var pausedLength = 0
+
     init {
         updateAudioFiles(context)
     }
@@ -130,33 +138,55 @@ class AudioViewModel @Inject constructor(
 
     fun playAudio(file: File) {
         try {
-            AudioPlayer(context).playAudio(file)
+            AudioPlayer(context). playAudio(
+                file = file,
+                getDuration = { duration ->
+                    Log.e("Vivek duration",duration.toString())
+                    _audioDuration.value = duration
+                },
+                getProgress = { progress ->
+                    _audioProgress.value = progress
+                }
+            )
+
         } catch (e: Exception) {
             Log.e("AudioPlay", "Exception: Failed to play audio", e)
         }
 
         if (!_isPlaying.value) {
-            AudioPlayer(context).pauseAudio()
+            AudioPlayer(context).pauseResumeAudio(_isPlaying.value,0)
             _isPlaying.value = true
         }
     }
 
+//    fun pauseAudio() {
+//        try {
+//            Log.e("AudioPlay", "Exception: Failed to pause audio" )
+//            _isPlaying.value = false
+//            AudioPlayer(context).pauseResumeAudio(_isPlaying.value,0)
+//        } catch (e: Exception) {
+//            Log.e("AudioPlay", "Exception: Failed to pause audio", e)
+//        }
+//    }
+
     fun pauseAudio() {
         try {
-            Log.e("AudioPlay", "Exception: Failed to pause audio" )
-            _isPlaying.value = false
-            AudioPlayer(context).pauseAudio()
+            if (_isPlaying.value) {
+                AudioPlayer(context).pauseResumeAudio(true, 2)
+                pausedLength = AudioPlayer(context).getCurrentPosition(true)?:0
+                _isPlaying.value = false
+            }
         } catch (e: Exception) {
             Log.e("AudioPlay", "Exception: Failed to pause audio", e)
         }
     }
 
-    fun resumeAudio(context: Context,file: File) {
+    fun resumeAudio() {
         try {
-            _isPlaying.value = true
-            Log.e("AudioPlay", "Exception: Failed to Resume audio" )
-            AudioPlayer(context).playAudio(file)
-
+            if (!_isPlaying.value) {
+                AudioPlayer(context).pauseResumeAudio(false, pausedLength)
+                _isPlaying.value = true
+            }
         } catch (e: Exception) {
             Log.e("AudioPlay", "Exception: Failed to resume audio", e)
         }

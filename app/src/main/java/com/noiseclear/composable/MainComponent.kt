@@ -44,6 +44,8 @@ fun MainComponent(onBackPress: () -> Unit ,audioViewModel : AudioViewModel = hil
     val currentFile by audioViewModel.audioFile.collectAsState(null)
     var currentPlayingFile by remember { mutableStateOf<File?>(null) }
     val isPlaying by audioViewModel.isPlaying.collectAsState(false)
+    val audioProgress by audioViewModel.audioProgress.collectAsState(0.0f)
+    val audioDuration by audioViewModel.audioDuration.collectAsState(0.0f)
 
     LaunchedEffect(currentFile, isRecording) {
         if (currentFile != null && !isRecording) {
@@ -108,7 +110,10 @@ fun MainComponent(onBackPress: () -> Unit ,audioViewModel : AudioViewModel = hil
                     currentPlayingFile = currentPlayingFile,
                     onUpdatePlayingFile = { file ->
                         currentPlayingFile = file
-                    }
+
+                    },
+                    audioDuration = audioDuration,
+                    audioProgress = audioProgress
                 )
             }
         }
