@@ -12,10 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -28,6 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.noiseclear.R
@@ -49,17 +50,17 @@ fun AudioList(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var fileToDelete by remember { mutableStateOf<File?>(null) }
     if (filesList.isNotEmpty()) {
-        LazyColumn(modifier = Modifier.fillMaxHeight(0.5f)) {
+        LazyColumn(modifier = Modifier.fillMaxHeight(0.5f).padding(start = 8.dp, end = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(filesList) { file ->
 
-                Column(modifier = Modifier.border(2.dp, color = Color.Red)){
+                Column(modifier = Modifier.border(2.dp, color = Color.Red, shape = RoundedCornerShape(8.dp)).padding(10.dp)){
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = file.name, modifier = Modifier.weight(1f))
+                        Text(text = file.name, modifier = Modifier.weight(2f))
 
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -77,10 +78,11 @@ fun AudioList(
                                         onPauseAudio()
                                         // onUpdatePlayingFile(null) // Reset the current playing file
                                     }) {
+                                        val icon : Painter = painterResource(id = R.drawable.pause)
                                         Icon(
-                                            Icons.Rounded.Clear,
+                                            painter =  icon,
                                             contentDescription = stringResource(R.string.pause_audi),
-                                            tint = Color.Red
+                                            tint = Color.Black
                                         )
                                     }
                                 }
@@ -96,10 +98,11 @@ fun AudioList(
                                         onUpdatePlayingFile(file) // Update the current playing file
                                         onPlayAudio(file) // Play the selected file
                                     }) {
+                                        val icon : Painter = painterResource(id = R.drawable.play)
                                         Icon(
-                                            Icons.Rounded.PlayArrow,
+                                            painter = icon,
                                             contentDescription = stringResource(R.string.play_audio),
-                                            tint = Color.Green
+                                            tint = Color.Black
                                         )
                                     }
                                 }

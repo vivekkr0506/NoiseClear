@@ -93,7 +93,7 @@ fun MainComponent(onBackPress: () -> Unit ,audioViewModel : AudioViewModel = hil
                 },
                 sheetState = sheetState,
                 shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-                scrimColor = Color.Unspecified
+                scrimColor = Color.Unspecified,
             ) {
                 AudioList(
                     filesList = fileList,
