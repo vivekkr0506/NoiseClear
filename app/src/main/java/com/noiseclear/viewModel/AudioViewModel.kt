@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
@@ -15,6 +14,7 @@ import com.noiseclear.playback.AudioPlayer
 import com.noiseclear.recorder.AudioRecorder
 import com.noiseclear.util.FILE_SIZE_LIMIT
 import com.noiseclear.util.NOISE_THRESHOLD
+import com.noiseclear.util.TIME_LIMIT
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,12 +81,21 @@ class AudioViewModel @Inject constructor(
                 }
             }
             val monitorThread = Thread {
+                val startTime = System.currentTimeMillis()
                 while (_isRecording.value) {
                     try {
+
+                        val elapsedTime = System.currentTimeMillis() - startTime
                         val fileSize = newFile.length()
+
+                        if (elapsedTime >= TIME_LIMIT) {
+                            _isRecording.value = false
+                            recorder.stop()
+                            break
+                        }
                         if (fileSize > FILE_SIZE_LIMIT) {
                             _isRecording.value = false
-                            Toast.makeText(context,"Size limit exceeded", Toast.LENGTH_LONG).show()
+                            recorder.stop()
                             break
                         }
                         Thread.sleep(500)
@@ -141,11 +150,14 @@ class AudioViewModel @Inject constructor(
             AudioPlayer(context). playAudio(
                 file = file,
                 getDuration = { duration ->
-                    Log.e("Vivek duration",duration.toString())
                     _audioDuration.value = duration
                 },
                 getProgress = { progress ->
                     _audioProgress.value = progress
+                    if (_audioProgress.value >= 0.92f) {
+                        _isPlaying.value = false
+                        updateStateToStarting()
+                    }
                 }
             )
 
@@ -159,20 +171,15 @@ class AudioViewModel @Inject constructor(
         }
     }
 
-//    fun pauseAudio() {
-//        try {
-//            Log.e("AudioPlay", "Exception: Failed to pause audio" )
-//            _isPlaying.value = false
-//            AudioPlayer(context).pauseResumeAudio(_isPlaying.value,0)
-//        } catch (e: Exception) {
-//            Log.e("AudioPlay", "Exception: Failed to pause audio", e)
-//        }
-//    }
+    private fun updateStateToStarting() {
+        _audioProgress.value = 0f
+        _isRecording.value = false
 
+    }
     fun pauseAudio() {
         try {
             if (_isPlaying.value) {
-                AudioPlayer(context).pauseResumeAudio(true, 2)
+                AudioPlayer(context).pauseResumeAudio(true, pausedLength)
                 pausedLength = AudioPlayer(context).getCurrentPosition(true)?:0
                 _isPlaying.value = false
             }

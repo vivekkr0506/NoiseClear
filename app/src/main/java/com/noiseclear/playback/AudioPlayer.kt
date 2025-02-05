@@ -38,6 +38,9 @@ class AudioPlayer(
                                     stop()
                                 }
                                 getProgress(progress)
+                                if(progress >= 0.99f){
+                                    stop()
+                                }
                             }
                             delay(500)
                         }
