@@ -24,8 +24,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    val onBackPress = {
-        this.onBackPressedDispatcher.onBackPressed()}
+    private val onBackPress = { this.onBackPressedDispatcher.onBackPressed()}
         override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkPermission(this, requestPermissionLauncher)

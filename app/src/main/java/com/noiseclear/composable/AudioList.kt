@@ -64,9 +64,8 @@ fun AudioList(
                         )
                         .padding(2.dp) // Padding between the gradient and the column content
                 ) {
-
                 }
-                Column(modifier = Modifier.border(2.dp, color = Color.Red, shape = RoundedCornerShape(8.dp)).padding(10.dp)){
+                Column(modifier = Modifier.border(2.dp, color = Color.DarkGray, shape = RoundedCornerShape(8.dp)).padding(10.dp)){
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
